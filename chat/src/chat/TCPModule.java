@@ -7,6 +7,8 @@ import java.io.InputStreamReader;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class TCPModule {
 
@@ -26,13 +28,15 @@ public class TCPModule {
 			// check portno is of length 4 and in range.
 		}
 
-		new SimpleThread(PORTNO).start();
+		new ServerThread(PORTNO).start();
 		// Thread.sleep(10000);
 		TCPClient.createClient(SERVER_IP, SERVER_PORT);
 	}
 }
 
 class TCPServer {
+	
+
 	public static void createServer(int portNo) throws IOException {
 		String clientSentence;
 		String capitalizedSentence;
@@ -41,7 +45,7 @@ class TCPServer {
 		while (true) {
 			System.out.println("******Server .. Listening : ");
 			Socket connectionSocket = welcomeSocket.accept(); // Blocking
-																// statement
+			System.out.println("-----> Connection: "+connectionSocket.getPort()+"\t add: "+connectionSocket.getInetAddress());											// statement
 
 			BufferedReader inFromClient = new BufferedReader(new InputStreamReader(connectionSocket.getInputStream()));
 			DataOutputStream outToClient = new DataOutputStream(connectionSocket.getOutputStream());
@@ -92,12 +96,43 @@ class TCPClient {
 		clientSocket.close();
 		System.exit(0);
 	}
+
+	public static Socket connectServer(String serverIP, int portNo) {
+		Socket clientSocket = null;
+		try {
+			clientSocket = new Socket(serverIP, portNo);
+		} catch (UnknownHostException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return clientSocket;
+	}
+
+	public static void send(Socket clientSocket) throws IOException {
+		DataOutputStream outToServer = new DataOutputStream(clientSocket.getOutputStream());
+		BufferedReader inFromServer = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+
+		BufferedReader inFromUser = new BufferedReader(new InputStreamReader(System.in));
+
+		System.out.println("Client: Input from console:");
+		String sentenceClientSending = inFromUser.readLine();
+
+		outToServer.writeBytes(sentenceClientSending + "\n");
+		/*String sentenceServerSent = inFromServer.readLine();
+		System.out.println("Client:  From Server: " + sentenceServerSent);*/
+
+	}
+
+	public static void disconnectServer(Socket clientSocket) throws IOException {
+		clientSocket.close();
+	}
 }
 
-class SimpleThread extends Thread {
+class ServerThread extends Thread {
 	private int portNO;
 
-	public SimpleThread(Object portNO) {
+	public ServerThread(Object portNO) {
 		super();
 		this.portNO = (int) portNO;
 	}
